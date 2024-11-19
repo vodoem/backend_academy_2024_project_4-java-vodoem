@@ -20,7 +20,7 @@ public record FractalImage(Pixel[] data, int width, int height) {
         return data[y * width + x];
     }
 
-    public void setPixel(int x, int y, Pixel pixel) {
+    public void updatePixel(int x, int y, Pixel pixel) {
         if (!contains(x, y)) {
             throw new IllegalArgumentException("Координаты выходят за пределы");
         }
