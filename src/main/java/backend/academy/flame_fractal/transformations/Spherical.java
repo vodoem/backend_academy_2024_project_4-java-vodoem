@@ -2,7 +2,7 @@ package backend.academy.flame_fractal.transformations;
 
 import backend.academy.flame_fractal.domain.Point;
 
-//factor = 1/(x^2 + y^2)
+//деформирует пространство, создавая эффект, который визуально напоминает проекцию на сферу
 public class Spherical implements Transformation {
     @Override
     public Point apply(Point point) {
