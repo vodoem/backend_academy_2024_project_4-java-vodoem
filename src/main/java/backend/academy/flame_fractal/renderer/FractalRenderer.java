@@ -1,112 +1,97 @@
 package backend.academy.flame_fractal.renderer;
 
+import backend.academy.flame_fractal.domain.Color;
 import backend.academy.flame_fractal.domain.FractalImage;
 import backend.academy.flame_fractal.domain.Pixel;
 import backend.academy.flame_fractal.domain.Point;
 import backend.academy.flame_fractal.domain.Rect;
 import backend.academy.flame_fractal.transformations.Transformation;
-
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class FractalRenderer {
-    private final int symmetry;
-    private final long seed;
-    private final int mixRed;
-    private final int mixGreen;
-    private final int mixBlue;
+    private final Rect world; // Область отображения фрактала
+    private final int maxIterations; // Максимальное число итераций для алгоритма
+    private final int symmetry; // Число симметрий
+    private final List<Transformation> transformations; // Список трансформаций
+    private final Map<Transformation, Color> transformationColors; // Цвета трансформаций
 
-    public FractalRenderer(int symmetry, long seed, int mixRed, int mixGreen, int mixBlue) {
+    public FractalRenderer(Rect world, int maxIterations, int symmetry, List<Transformation> transformations, Map<Transformation, Color> transformationColors) {
+        if (maxIterations <= 0) {
+            throw new IllegalArgumentException("Число итераций должно быть положительным");
+        }
+        if (symmetry < 0) {
+            throw new IllegalArgumentException("Симметрия должна быть не отрицательной");
+        }
+        if (transformations.size() != transformationColors.size()) {
+            throw new IllegalArgumentException("Каждой трансформации должен соответствовать цвет");
+        }
+
+        this.world = world;
+        this.maxIterations = maxIterations;
         this.symmetry = symmetry;
-        this.seed = seed;
-        this.mixRed = mixRed;
-        this.mixGreen = mixGreen;
-        this.mixBlue = mixBlue;
+        this.transformations = transformations;
+        this.transformationColors = new HashMap<>(transformationColors);
     }
 
-    public FractalImage render(
-        FractalImage canvas,
-        Rect world,
-        List<Transformation> variations,
-        int samples,
-        short iterPerSample
-    ) {
-        Random random = new Random(seed);
-
-        for (int num = 0; num < samples; ++num) {
-            Point pw = randomPointInRect(world, random);
-
-            for (short step = 0; step < iterPerSample; ++step) {
-                // Случайным образом выбираем трансформацию
-                Transformation variation = randomTransformation(variations, random);
-
-                // Применяем трансформацию к точке
-                pw = variation.apply(pw);
-
-                // Обрабатываем симметричные точки
-                double theta2 = 0.0;
-                for (int s = 0; s < symmetry; theta2 += Math.PI * 2 / symmetry, ++s) {
-                    Point rotated = rotate(pw, theta2);
-
-                    if (!world.contains(rotated)) {
-                        continue;
+    public void render(FractalImage image, int samples, long seed) {
+        Random rng = new Random(seed);
+        for (int num = 0; num < samples; num++) {
+            Point point = randomPointInViewPort(rng);
+            for (int iter = 0; iter < maxIterations; iter++) {
+                Transformation transformation = randomTransformation(rng);
+                point = transformation.apply(point);
+                if (symmetry > 0) {
+                    for (int s = 0; s < symmetry; s++) {
+                        Point symPoint = rotate(point, s * 2 * Math.PI / symmetry);
+                        applyChanges(image, symPoint, transformation);
                     }
-
-                    Pixel pixel = mapToCanvas(world, rotated, canvas);
-                    if (pixel == null) {
-                        continue;
-                    }
-
-                    // Обрабатываем пиксель (лок на время работы и смешивание цвета)
-                    pixel = pixel.mixColor(mixRed, mixGreen, mixBlue);
-                    canvas.updatePixel((int) rotated.x(), (int) rotated.y(), pixel);
+                } else {
+                    applyChanges(image, point, transformation);
                 }
             }
         }
-
-        return canvas;
     }
 
-    // Генерация случайной точки в прямоугольнике
-    private Point randomPointInRect(Rect rect, Random random) {
-        double x = rect.x() + random.nextDouble() * rect.width();
-        double y = rect.y() + random.nextDouble() * rect.height();
+    private void applyChanges(FractalImage image, Point point, Transformation transformation) {
+        if (world.contains(point)) {
+            int canvasX = extension(image.width(), world.x(), world.x() + world.width(), point.x());
+            int canvasY = extension(image.height(), world.y(), world.y() + world.height(), point.y());
+
+            if (image.contains(canvasX, canvasY)) {
+                updatePixel(image, canvasX, canvasY, transformation);
+            }
+        }
+    }
+
+    private void updatePixel(FractalImage image, int x, int y, Transformation transformation) {
+        Pixel oldPixel = image.pixel(x, y);
+        Color color = transformationColors.get(transformation);
+        Pixel newPixel = oldPixel.mixColor(color.red(), color.green(), color.blue());
+        image.updatePixel(x, y, newPixel);
+    }
+
+    private Point randomPointInViewPort(Random rng) {
+        double x = world.x() + rng.nextDouble() * world.width();
+        double y = world.y() + rng.nextDouble() * world.height();
         return new Point(x, y);
     }
 
-    // Случайный выбор трансформации
-    private Transformation randomTransformation(List<Transformation> variations, Random random) {
-        return variations.get(random.nextInt(variations.size()));
+    private Transformation randomTransformation(Random rng) {
+        return transformations.get(rng.nextInt(transformations.size()));
     }
 
-    // Поворот точки на угол
-    private Point rotate(Point point, double theta) {
-        double cosTheta = Math.cos(theta);
-        double sinTheta = Math.sin(theta);
+    private int extension(int size, double min, double max, double point) {
+        return size - (int) Math.ceil((max - point) / (max - min) * size);
+    }
+
+    private Point rotate(Point point, double angle) {
+        double cosTheta = Math.cos(angle);
+        double sinTheta = Math.sin(angle);
         double x = point.x() * cosTheta - point.y() * sinTheta;
         double y = point.x() * sinTheta + point.y() * cosTheta;
         return new Point(x, y);
-    }
-
-    // Масштабирование координат на холсте
-    private Pixel mapToCanvas(Rect world, Point point, FractalImage canvas) {
-        int x = mapX(world, point.x(), canvas.width());
-        int y = mapY(world, point.y(), canvas.height());
-
-        if (!canvas.contains(x, y)) {
-            return null; // Если точка вне холста, возвращаем null
-        }
-
-        return canvas.pixel(x, y);
-    }
-
-    // Преобразование координаты X в координату холста
-    private int mapX(Rect world, double x, int width) {
-        return (int) ((x - world.x()) / world.width() * (width - 1));
-    }
-
-    // Преобразование координаты Y в координату холста
-    private int mapY(Rect world, double y, int height) {
-        return (int) ((y - world.y()) / world.height() * (height - 1));
     }
 }
