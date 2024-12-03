@@ -3,7 +3,7 @@ package backend.academy.flame_fractal.transformations;
 import backend.academy.flame_fractal.domain.Point;
 import java.util.Random;
 
-//Создает эффект закручивания точек вокруг центра.
+
 public class JuliaScopeTransformation implements Transformation {
     private final double JULIA_SCOPE_POWER = 10.0;
     private final double JULIA_SCOPE_DIST = 5.0;

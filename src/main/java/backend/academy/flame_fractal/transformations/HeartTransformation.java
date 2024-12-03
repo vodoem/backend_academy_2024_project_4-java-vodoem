@@ -2,7 +2,7 @@ package backend.academy.flame_fractal.transformations;
 
 import backend.academy.flame_fractal.domain.Point;
 
-//превращающая точки в форму сердца.
+
 public class HeartTransformation implements Transformation {
     @Override
     public Point apply(Point point) {
