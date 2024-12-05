@@ -4,7 +4,6 @@ import backend.academy.flame_fractal.domain.FractalImage;
 import backend.academy.flame_fractal.domain.Pixel;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public abstract class MultiThreadedImageProcessor implements ImageProcessor {
     private static final int THREAD_COUNT = Runtime.getRuntime().availableProcessors();
@@ -18,16 +17,7 @@ public abstract class MultiThreadedImageProcessor implements ImageProcessor {
             executor.submit(() -> processRow(image, row));
         }
 
-        executor.shutdown();
-        try {
-            boolean terminated = executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-            if (!terminated) {
-                throw new RuntimeException("Обработка изображения не завершилась в ожидаемое время");
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Обработка изображения была прервана", e);
-        }
+        executor.close();
     }
 
     private void processRow(FractalImage image, int y) {

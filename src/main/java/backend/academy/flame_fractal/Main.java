@@ -19,7 +19,9 @@ import backend.academy.flame_fractal.utils.ImageFormat;
 import backend.academy.flame_fractal.utils.ImageUtils;
 import lombok.experimental.UtilityClass;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
@@ -70,6 +72,16 @@ public class Main {
             processor.process(canvas);
         }
 
-        ImageUtils.save(canvas, Path.of("fractals/fractal_output.png"), format);
+        Path outputDirectory = Paths.get("fractals");
+        Path outputFile = outputDirectory.resolve("fractal_output.png");
+
+        if (!Files.exists(outputDirectory)) {
+            Files.createDirectories(outputDirectory);
+        }
+
+        // Сохранение изображения
+        ImageUtils.save(canvas, outputFile, format);
+        System.out.println("Изображение успешно сохранено: " + outputFile);
+//        ImageUtils.save(canvas, Path.of("fractals/fractal_output.png"), format);
     }
 }
