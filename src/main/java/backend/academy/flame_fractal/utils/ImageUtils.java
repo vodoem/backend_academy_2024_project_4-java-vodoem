@@ -2,12 +2,15 @@ package backend.academy.flame_fractal.utils;
 
 import backend.academy.flame_fractal.domain.FractalImage;
 import backend.academy.flame_fractal.domain.Pixel;
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Path;
+import javax.imageio.ImageIO;
 
 public class ImageUtils {
+    private static final int SIXTEEN_BIT = 16;
+    private static final int EIGHT_BIT = 8;
+
     private ImageUtils() {
     }
 
@@ -25,8 +28,8 @@ public class ImageUtils {
         for (int y = 0; y < image.height(); y++) {
             for (int x = 0; x < image.width(); x++) {
                 Pixel pixel = image.pixel(x, y);
-                int rgb = (pixel.r() << 16) | (pixel.g() << 8) |
-                    pixel.b(); // преобразование нашего rgb в 24-битное представление rgb при помощи побитового сдвига
+                int rgb = (pixel.r() << SIXTEEN_BIT) | (pixel.g() << EIGHT_BIT)
+                    | pixel.b(); // преобразование нашего rgb в 24-битное представление rgb при помощи побитового сдвига
                 bufferedImage.setRGB(x, y, rgb);
             }
         }

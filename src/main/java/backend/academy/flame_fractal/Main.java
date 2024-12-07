@@ -16,17 +16,22 @@ import backend.academy.flame_fractal.transformations.JuliaScopeTransformation;
 import backend.academy.flame_fractal.transformations.Transformation;
 import backend.academy.flame_fractal.transformations.WavesTransformation;
 import backend.academy.flame_fractal.utils.ImageFormat;
+import backend.academy.flame_fractal.utils.ImageSize;
 import backend.academy.flame_fractal.utils.ImageUtils;
-import lombok.experimental.UtilityClass;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class Main {
+    private static final PrintStream PRINT_STREAM = System.out;
+
+
     public static void main(String[] args) throws IOException {
 
         UserConfigurator configurator = new UserConfigurator();
@@ -48,10 +53,14 @@ public class Main {
         List<Transformation> transformations = configurator.configureTransformations(availableTransformations);
         Map<Transformation, Color> colors = configurator.configureColors(transformations);
 
-        int[] imageSize = configurator.configureImageSize();
-        FractalImage canvas = FractalImage.create(imageSize[0], imageSize[1]);
+        ImageSize imageSize = configurator.configureImageSize();
 
-        Rect world = configurator.computeRect(imageSize[0], imageSize[1]);
+        int imageWidth = imageSize.width();
+        int imageHeight = imageSize.height();
+
+        FractalImage canvas = FractalImage.create(imageWidth, imageHeight);
+
+        Rect world = configurator.computeRect(imageWidth, imageHeight);
 
         ImageFormat format = configurator.configureImageFormat();
 
@@ -62,13 +71,16 @@ public class Main {
         FractalRenderer renderer;
         if (threads == 1) {
             renderer = new SingleThreadedFractalRenderer(world, iterPerSample, symmetry, transformations, colors);
+
         } else {
-            renderer = new MultiThreadedFractalRenderer(world, iterPerSample, symmetry, transformations, colors, threads);
+            renderer =
+                new MultiThreadedFractalRenderer(world, iterPerSample, symmetry, transformations, colors, threads);
+
         }
 
         renderer.render(canvas, samples, seed);
 
-        if(processor != null){
+        if (processor != null) {
             processor.process(canvas);
         }
 
@@ -81,7 +93,6 @@ public class Main {
 
         // Сохранение изображения
         ImageUtils.save(canvas, outputFile, format);
-        System.out.println("Изображение успешно сохранено: " + outputFile);
-//        ImageUtils.save(canvas, Path.of("fractals/fractal_output.png"), format);
+        PRINT_STREAM.println("Изображение успешно сохранено: " + outputFile);
     }
 }

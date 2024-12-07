@@ -2,17 +2,15 @@ package backend.academy.flame_fractal.processor;
 
 
 public class LogarithmicGammaCorrectionProcessor extends MultiThreadedImageProcessor {
+    private static final double MAX_COLOR = 255;
     private final double scaleFactor; // Коэффициент масштаба
 
     public LogarithmicGammaCorrectionProcessor(double scaleFactor) {
-        if (scaleFactor <= 0) {
-            throw new IllegalArgumentException("Коэффициент должен быть положительным");
-        }
         this.scaleFactor = scaleFactor;
     }
 
     protected int correct(int color) {
         // Логарифмическое преобразование цвета
-        return (int) (255 * Math.log(1 + scaleFactor * color) / Math.log(1 + scaleFactor * 255));
+        return (int) (MAX_COLOR * Math.log(1 + scaleFactor * color) / Math.log(1 + scaleFactor * MAX_COLOR));
     }
 }
