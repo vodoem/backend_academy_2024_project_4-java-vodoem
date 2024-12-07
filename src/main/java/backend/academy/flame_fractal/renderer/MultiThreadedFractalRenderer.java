@@ -42,6 +42,7 @@ public class MultiThreadedFractalRenderer extends AbstractFractalRenderer {
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
         long startTime = System.nanoTime();
 
+        //для синхронизации по пикселю, а не по изображению полностью
         int imageWidth = image.width();
         int imageHeight = image.height();
         pixelLocks = new ReentrantLock[imageWidth][imageHeight];
@@ -78,6 +79,7 @@ public class MultiThreadedFractalRenderer extends AbstractFractalRenderer {
 
     @Override
     protected void updatePixel(FractalImage image, int x, int y, Transformation transformation) {
+        //синхронизация по пикселю
         ReentrantLock lock = pixelLocks[x][y];
         lock.lock();
         try {
